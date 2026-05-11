@@ -1,11 +1,13 @@
-import type { ParsedTask } from "./types";
+import type { ParsedTask, RawParsedTask } from "./types";
 import { COGNITIVE_MODES } from "./types";
 import { TASK_SCHEMA, systemPrompt } from "./prompt";
+import { resolveDeadline } from "./dates";
 
 export const DEFAULT_MODEL = "gemma4:26b";
 
 export type ParseResult = {
   task: ParsedTask;
+  rawTask: RawParsedTask;
   raw: string;
   latencyMs: number;
 };
@@ -72,8 +74,8 @@ export async function parseTask(
     } satisfies ParseError;
   }
 
-  const task = validate(parsed);
-  if (!task) {
+  const rawTask = validate(parsed);
+  if (!rawTask) {
     throw {
       kind: "shape",
       message: "Model output didn't match the expected shape.",
@@ -81,21 +83,30 @@ export async function parseTask(
     } satisfies ParseError;
   }
 
-  return { task, raw, latencyMs: performance.now() - start };
+  const task: ParsedTask = {
+    title: rawTask.title,
+    deadline: resolveDeadline(rawTask.deadline, rawTask.deadlineTime, today),
+    cognitiveMode: rawTask.cognitiveMode,
+    estimatedMinutes: rawTask.estimatedMinutes,
+  };
+
+  return { task, rawTask, raw, latencyMs: performance.now() - start };
 }
 
-function validate(x: unknown): ParsedTask | null {
+function validate(x: unknown): RawParsedTask | null {
   if (!x || typeof x !== "object") return null;
   const o = x as Record<string, unknown>;
   if (typeof o.title !== "string") return null;
   if (o.deadline !== null && typeof o.deadline !== "string") return null;
+  if (o.deadlineTime !== null && typeof o.deadlineTime !== "string") return null;
   if (typeof o.cognitiveMode !== "string") return null;
   if (!(COGNITIVE_MODES as readonly string[]).includes(o.cognitiveMode)) return null;
   if (typeof o.estimatedMinutes !== "number" || !Number.isFinite(o.estimatedMinutes)) return null;
   return {
     title: o.title,
     deadline: o.deadline as string | null,
-    cognitiveMode: o.cognitiveMode as ParsedTask["cognitiveMode"],
+    deadlineTime: o.deadlineTime as string | null,
+    cognitiveMode: o.cognitiveMode as RawParsedTask["cognitiveMode"],
     estimatedMinutes: o.estimatedMinutes,
   };
 }

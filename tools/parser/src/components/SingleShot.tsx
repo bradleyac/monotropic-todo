@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { ParsedTask } from "../types";
+import type { ParsedTask, RawParsedTask } from "../types";
 import { parseTask, type ParseError } from "../parser";
 
 type Props = {
@@ -10,7 +10,13 @@ type Props = {
 type Output =
   | { kind: "idle" }
   | { kind: "loading" }
-  | { kind: "ok"; task: ParsedTask; raw: string; latencyMs: number }
+  | {
+      kind: "ok";
+      task: ParsedTask;
+      rawTask: RawParsedTask;
+      raw: string;
+      latencyMs: number;
+    }
   | { kind: "err"; message: string; raw?: string };
 
 export function SingleShot({ today, model }: Props) {
@@ -22,7 +28,13 @@ export function SingleShot({ today, model }: Props) {
     setOut({ kind: "loading" });
     try {
       const r = await parseTask(input.trim(), today, model);
-      setOut({ kind: "ok", task: r.task, raw: r.raw, latencyMs: r.latencyMs });
+      setOut({
+        kind: "ok",
+        task: r.task,
+        rawTask: r.rawTask,
+        raw: r.raw,
+        latencyMs: r.latencyMs,
+      });
     } catch (e) {
       const err = e as ParseError;
       setOut({ kind: "err", message: err.message, raw: err.raw });
@@ -56,7 +68,18 @@ export function SingleShot({ today, model }: Props) {
           <div className="output-meta">
             <span className="chip">{out.latencyMs.toFixed(0)} ms</span>
           </div>
-          <pre className="output-json">{JSON.stringify(out.task, null, 2)}</pre>
+          <div className="output-section">
+            <div className="output-section-label">resolved</div>
+            <pre className="output-json">
+              {JSON.stringify(out.task, null, 2)}
+            </pre>
+          </div>
+          <div className="output-section">
+            <div className="output-section-label">model tokens</div>
+            <pre className="output-json output-json-muted">
+              {JSON.stringify(out.rawTask, null, 2)}
+            </pre>
+          </div>
         </div>
       )}
       {out.kind === "err" && (

@@ -186,6 +186,22 @@ textarea:focus {
   margin-bottom: 10px;
 }
 
+.output-section {
+  margin-top: 10px;
+}
+
+.output-section:first-of-type {
+  margin-top: 0;
+}
+
+.output-section-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
 .output-json {
   margin: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -193,6 +209,11 @@ textarea:focus {
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.output-json-muted {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .output-err {
