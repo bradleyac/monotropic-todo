@@ -68,6 +68,15 @@ function resolveDate(token: string, today: string): Date | null {
     }
   }
   if (/^\d{4}-\d{2}-\d{2}$/.test(token)) return parseDate(token);
+  if (/^\d{2}-\d{2}$/.test(token)) {
+    // Month+day only — pick the next occurrence going forward. If MM-DD has
+    // already passed this year, it's next year. Same rule as bare weekdays:
+    // people say "February 3rd" in May meaning the upcoming February.
+    const [m, d] = token.split("-").map(Number);
+    const year = todayDate.getFullYear();
+    const candidate = new Date(year, m - 1, d);
+    return candidate >= todayDate ? candidate : new Date(year + 1, m - 1, d);
+  }
   return null;
 }
 

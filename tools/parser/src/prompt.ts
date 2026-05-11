@@ -46,9 +46,10 @@ Return a JSON object with these fields:
     "tomorrow"                     user said "tomorrow"
     "monday" .. "sunday"           user named a weekday ("Friday", "by Tuesday", "on Thursday")
     "next-monday" .. "next-sunday" user said "next <weekday>" explicitly
-    "YYYY-MM-DD"                   user gave an explicit calendar date (e.g. "May 15"). Use today's year when only month+day are given.
+    "MM-DD"                        user gave a month + day with no year (e.g. "May 15", "February 3rd", "12/25"). Two-digit month and day, zero-padded.
+    "YYYY-MM-DD"                   user gave an explicit year too (e.g. "May 15 2027").
 
-  Important: do not translate weekdays into dates. If the user says "Tuesday", emit "tuesday" — not a YYYY-MM-DD. The application will handle the date arithmetic.
+  Important: do not translate weekdays or month+day into a full date. If the user says "Tuesday", emit "tuesday". If they say "February 3rd", emit "02-03". The application picks the right week/year (always the next occurrence forward) so you don't have to.
 
 - deadlineTime (string | null): "HH:mm" 24-hour, when a specific time is mentioned. Otherwise null.
     "3pm"     -> "15:00"
