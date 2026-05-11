@@ -1,5 +1,5 @@
 import type { ParsedTask, RawParsedTask } from "./types";
-import { COGNITIVE_MODES } from "./types";
+import { COGNITIVE_MODES, CONTEXTS } from "./types";
 import { TASK_SCHEMA, systemPrompt } from "./prompt";
 import { resolveDeadline } from "./dates";
 
@@ -87,6 +87,7 @@ export async function parseTask(
     title: rawTask.title,
     deadline: resolveDeadline(rawTask.deadline, rawTask.deadlineTime, today),
     cognitiveMode: rawTask.cognitiveMode,
+    context: rawTask.context,
     estimatedMinutes: rawTask.estimatedMinutes,
   };
 
@@ -101,12 +102,15 @@ function validate(x: unknown): RawParsedTask | null {
   if (o.deadlineTime !== null && typeof o.deadlineTime !== "string") return null;
   if (typeof o.cognitiveMode !== "string") return null;
   if (!(COGNITIVE_MODES as readonly string[]).includes(o.cognitiveMode)) return null;
+  if (typeof o.context !== "string") return null;
+  if (!(CONTEXTS as readonly string[]).includes(o.context)) return null;
   if (typeof o.estimatedMinutes !== "number" || !Number.isFinite(o.estimatedMinutes)) return null;
   return {
     title: o.title,
     deadline: o.deadline as string | null,
     deadlineTime: o.deadlineTime as string | null,
     cognitiveMode: o.cognitiveMode as RawParsedTask["cognitiveMode"],
+    context: o.context as RawParsedTask["context"],
     estimatedMinutes: o.estimatedMinutes,
   };
 }

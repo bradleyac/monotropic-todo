@@ -1,10 +1,9 @@
-import { COGNITIVE_MODES } from "./types";
+import { COGNITIVE_MODES, CONTEXTS } from "./types";
 
 // JSON schema passed to Ollama as `format`. Ollama constrains generation
-// to match it, so we get well-formed JSON back without retries or fragile
-// parsing. `deadline` is a string with internal grammar (token vocabulary)
-// that JSON Schema can't easily express, so we keep it loose here and
-// validate downstream in dates.ts.
+// to match it. `deadline` is a string with internal grammar (token
+// vocabulary) that JSON Schema can't easily express, so we keep it loose
+// here and validate downstream in dates.ts.
 export const TASK_SCHEMA = {
   type: "object",
   properties: {
@@ -15,6 +14,7 @@ export const TASK_SCHEMA = {
       type: "string",
       enum: COGNITIVE_MODES as unknown as string[],
     },
+    context: { type: "string", enum: CONTEXTS as unknown as string[] },
     estimatedMinutes: { type: "number" },
   },
   required: [
@@ -22,15 +22,11 @@ export const TASK_SCHEMA = {
     "deadline",
     "deadlineTime",
     "cognitiveMode",
+    "context",
     "estimatedMinutes",
   ],
 } as const;
 
-// The model emits a symbolic deadline token; resolveDeadline() in dates.ts
-// turns it into an ISO date. This avoids asking the LLM to do day-of-week
-// arithmetic, which it gets wrong (it was resolving "Tuesday" from Monday
-// 2026-05-11 to 2026-05-19 — next-week semantics, plus the model has no
-// reliable way to compute weekday from a bare ISO date).
 export function systemPrompt(today: string): string {
   return `Today is ${today}.
 
@@ -56,13 +52,21 @@ Return a JSON object with these fields:
     "9:30am"  -> "09:30"
     no time   -> null
 
-- cognitiveMode: one of:
-    - "deep-thinking" — design, analysis, debugging, learning, deep problem-solving requiring uninterrupted focus
-    - "creative"      — writing, drawing, ideation, anything generative
-    - "physical"      — errands, chores, manual tasks, exercise, being somewhere or moving your body
-    - "admin"         — routine paperwork, scheduling, expense reports, low-thought process work
-    - "social-sync"   — meetings, calls, in-person conversations (real-time)
-    - "social-async"  — emails, slack, comments, async replies, drafting messages
+- cognitiveMode: WHAT KIND OF THINKING the task demands. One of:
+    "deep-thinking" — design, analysis, debugging, learning, deep problem-solving requiring uninterrupted focus
+    "creative"      — writing, drawing, ideation, anything generative
+    "physical"      — manual tasks, chores, errands, exercise — anything whose work is your body, not your mind
+    "admin"         — routine paperwork, scheduling, expense reports, low-thought process work
+    "social-sync"   — meetings, calls, appointments, in-person conversations (real-time interaction with someone)
+    "social-async"  — emails, slack, comments, async replies, drafting messages
+
+- context: WHERE / HOW the task happens. Orthogonal to cognitiveMode. One of:
+    "at-desk"       — requires sitting at a computer or desk
+    "at-home"       — can be done anywhere at home, no special setup (laundry, dishes, light reading)
+    "out-and-about" — requires leaving home (errands, store visits, in-person appointments, shopping)
+    "phone-only"    — requires making or taking a phone call (not a video meeting at your desk)
+
+  Choose context by where the body has to be. A dentist appointment is "social-sync" (you're interacting with the hygienist) AND "out-and-about" (you have to drive there). An email is "social-async" AND "at-desk". A call to reschedule something is "social-sync" AND "phone-only".
 
 - estimatedMinutes (number): realistic focused-work estimate. Typical ranges: a quick email 5-15, a short errand 30-60, a 1:1 meeting 30, deep design work 60-180.
 

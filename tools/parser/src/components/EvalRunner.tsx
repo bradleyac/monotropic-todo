@@ -117,6 +117,14 @@ function EvalBody({ row }: { row: Row }) {
         pass={s.checks.mode}
       />
       <FieldRow
+        label="context"
+        expected={
+          Array.isArray(exp.context) ? exp.context.join(" | ") : exp.context
+        }
+        actual={t.context}
+        pass={s.checks.context}
+      />
+      <FieldRow
         label="minutes"
         expected={`${exp.minutes[0]}–${exp.minutes[1]}`}
         actual={String(t.estimatedMinutes)}

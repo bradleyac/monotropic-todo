@@ -9,22 +9,33 @@ export const COGNITIVE_MODES = [
 
 export type CognitiveMode = (typeof COGNITIVE_MODES)[number];
 
-// What the model emits. `deadline` is a symbolic token ("today", "tuesday",
-// "next-friday", "2026-05-15", or null) — the resolver in dates.ts turns it
-// into an ISO string. Keeping the model out of date arithmetic.
+// Where/how the task has to happen. Orthogonal to cognitive mode: a dentist
+// appointment is social-sync by mode (you're interacting with someone) but
+// out-and-about by context (you have to leave the house). The scheduler
+// uses context to cluster errands with anchored appointments — that's the
+// "while you're already out, do the other errands" intuition.
+export const CONTEXTS = [
+  "at-desk",
+  "at-home",
+  "out-and-about",
+  "phone-only",
+] as const;
+
+export type Context = (typeof CONTEXTS)[number];
+
 export type RawParsedTask = {
   title: string;
   deadline: string | null;
   deadlineTime: string | null;
   cognitiveMode: CognitiveMode;
+  context: Context;
   estimatedMinutes: number;
 };
 
-// User-facing shape after the resolver has run. `deadline` is "YYYY-MM-DD"
-// or "YYYY-MM-DDTHH:mm" or null.
 export type ParsedTask = {
   title: string;
   deadline: string | null;
   cognitiveMode: CognitiveMode;
+  context: Context;
   estimatedMinutes: number;
 };
