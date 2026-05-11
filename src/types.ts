@@ -16,6 +16,7 @@ export type Task = {
   estMinutes: number;
   affinity: Affinity;
   done: boolean;
+  scheduledFor: string; // ISO date, e.g. "2026-05-11"
   notes?: string;
 };
 
@@ -26,3 +27,7 @@ export type Run = {
   taskIds: string[];
   estMinutes: number;
 };
+
+// Sunday=0 … Saturday=6, matching Date.prototype.getDay()
+export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+export type WeekThemes = Record<DayOfWeek, CognitiveMode[]>;

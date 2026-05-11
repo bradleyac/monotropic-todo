@@ -1,8 +1,9 @@
-import type { Affinity, Task } from "./types";
+import type { Affinity, CognitiveMode, Task, WeekThemes } from "./types";
+import { addDays, dayOfWeek, toISODate } from "./dateUtils";
 
 // Mock natural-language parser. Real version will call a hosted LLM; this
 // keyword-based stand-in is enough to demo the capture UX.
-export function mockParse(input: string): Task {
+export function mockParse(input: string, themes: WeekThemes, from = new Date()): Task {
   const text = input.trim();
   const lower = text.toLowerCase();
   const affinity = guessAffinity(lower);
@@ -12,7 +13,23 @@ export function mockParse(input: string): Task {
     estMinutes: guessMinutes(lower),
     affinity,
     done: false,
+    scheduledFor: nextMatchingDay(from, affinity.mode, themes),
   };
+}
+
+// Find the next day (starting today) whose theme opens this cognitive mode.
+// Falls back to today if no day in the next two weeks matches — keeps capture
+// from disappearing if themes are misconfigured.
+export function nextMatchingDay(
+  from: Date,
+  mode: CognitiveMode,
+  themes: WeekThemes,
+): string {
+  for (let i = 0; i < 14; i++) {
+    const d = addDays(from, i);
+    if (themes[dayOfWeek(d)].includes(mode)) return toISODate(d);
+  }
+  return toISODate(from);
 }
 
 function guessAffinity(s: string): Affinity {

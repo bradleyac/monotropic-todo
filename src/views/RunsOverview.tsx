@@ -1,29 +1,57 @@
 import type { Run, Task } from "../types";
 import { useFlipContainer } from "../useFlip";
+import { DAY_NAMES } from "../themes";
+import { dayOfWeek, parseISODate } from "../dateUtils";
 
 type Props = {
   runs: Run[];
   tasks: Record<string, Task>;
+  selectedDate: string;
+  today: string;
   onEnterRun: (runId: string) => void;
 };
 
-export function RunsOverview({ runs, tasks, onEnterRun }: Props) {
+export function RunsOverview({
+  runs,
+  tasks,
+  selectedDate,
+  today,
+  onEnterRun,
+}: Props) {
   const total = runs.reduce((s, r) => s + r.estMinutes, 0);
+  const heading =
+    selectedDate === today
+      ? "today"
+      : DAY_NAMES[dayOfWeek(parseISODate(selectedDate))].toLowerCase();
+
   return (
     <section className="overview">
       <header className="overview-header">
-        <h1>today</h1>
-        <p className="muted">
-          {runs.length} runs · about {fmt(total)} left
-        </p>
+        <h1>{heading}</h1>
+        {runs.length > 0 ? (
+          <p className="muted">
+            {runs.length} {runs.length === 1 ? "run" : "runs"} · about{" "}
+            {fmt(total)} left
+          </p>
+        ) : (
+          <p className="muted">no runs planned</p>
+        )}
       </header>
-      <ul className="run-list">
-        {runs.map((run) => (
-          <li key={run.id}>
-            <RunCard run={run} tasks={tasks} onEnter={onEnterRun} />
-          </li>
-        ))}
-      </ul>
+      {runs.length === 0 ? (
+        <p className="empty">
+          {selectedDate === today
+            ? "nothing scheduled today. capture something below or peek at another day."
+            : "nothing scheduled. tasks of this day's mode auto-land here."}
+        </p>
+      ) : (
+        <ul className="run-list">
+          {runs.map((run) => (
+            <li key={run.id}>
+              <RunCard run={run} tasks={tasks} onEnter={onEnterRun} />
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

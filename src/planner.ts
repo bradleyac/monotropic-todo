@@ -12,9 +12,11 @@ const MODE_LABEL: Record<CognitiveMode, string> = {
 
 // A run is defined by a (mode, context) key. Tasks within a run sort by
 // energy descending so the hardest item is first while attention is freshest.
-export function planRuns(tasks: Task[]): Run[] {
+// Only tasks scheduled for `date` are considered.
+export function planRuns(tasks: Task[], date: string): Run[] {
   const groups = new Map<string, Task[]>();
   for (const t of tasks) {
+    if (t.scheduledFor !== date) continue;
     const key = `${t.affinity.mode}::${t.affinity.context}`;
     const bucket = groups.get(key) ?? [];
     bucket.push(t);
@@ -30,7 +32,7 @@ export function planRuns(tasks: Task[]): Run[] {
     const shape = dominantShape(bucket);
     const remaining = bucket.filter((t) => !t.done);
     runs.push({
-      id: `run:${key}`,
+      id: `run:${date}:${key}`,
       label: runLabel(shape),
       shape,
       taskIds: bucket.map((t) => t.id),

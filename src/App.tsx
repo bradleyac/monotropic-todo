@@ -3,10 +3,13 @@ import type { Task } from "./types";
 import { seedTasks } from "./mockData";
 import { planRuns } from "./planner";
 import { mockParse } from "./parser";
+import { DEFAULT_THEMES } from "./themes";
+import { todayISO } from "./dateUtils";
 import { RunsOverview } from "./views/RunsOverview";
 import { RunFocus } from "./views/RunFocus";
 import { Transition } from "./views/Transition";
 import { CaptureBar } from "./views/CaptureBar";
+import { DayStrip } from "./views/DayStrip";
 
 type Screen =
   | { kind: "overview" }
@@ -16,6 +19,8 @@ type Screen =
 export function App() {
   const [tasks, setTasks] = useState<Task[]>(seedTasks);
   const [screen, setScreen] = useState<Screen>({ kind: "overview" });
+  const today = useMemo(() => todayISO(), []);
+  const [selectedDate, setSelectedDate] = useState<string>(today);
 
   const tasksById = useMemo(() => {
     const m: Record<string, Task> = {};
@@ -23,7 +28,10 @@ export function App() {
     return m;
   }, [tasks]);
 
-  const runs = useMemo(() => planRuns(tasks), [tasks]);
+  const runs = useMemo(
+    () => planRuns(tasks, selectedDate),
+    [tasks, selectedDate],
+  );
 
   function toggle(taskId: string) {
     setTasks((prev) => {
@@ -53,7 +61,12 @@ export function App() {
   }
 
   function capture(text: string) {
-    setTasks((prev) => [...prev, mockParse(text)]);
+    setTasks((prev) => [...prev, mockParse(text, DEFAULT_THEMES)]);
+  }
+
+  function selectDate(date: string) {
+    setSelectedDate(date);
+    setScreen({ kind: "overview" });
   }
 
   function enterRun(runId: string) {
@@ -80,13 +93,43 @@ export function App() {
   let body;
   if (screen.kind === "overview") {
     body = (
-      <RunsOverview runs={runs} tasks={tasksById} onEnterRun={enterRun} />
+      <>
+        <DayStrip
+          selected={selectedDate}
+          today={today}
+          themes={DEFAULT_THEMES}
+          tasks={tasks}
+          onSelect={selectDate}
+        />
+        <RunsOverview
+          runs={runs}
+          tasks={tasksById}
+          selectedDate={selectedDate}
+          today={today}
+          onEnterRun={enterRun}
+        />
+      </>
     );
   } else if (screen.kind === "focus") {
     const run = runs.find((r) => r.id === screen.runId);
     if (!run) {
       body = (
-        <RunsOverview runs={runs} tasks={tasksById} onEnterRun={enterRun} />
+        <>
+          <DayStrip
+            selected={selectedDate}
+            today={today}
+            themes={DEFAULT_THEMES}
+            tasks={tasks}
+            onSelect={selectDate}
+          />
+          <RunsOverview
+            runs={runs}
+            tasks={tasksById}
+            selectedDate={selectedDate}
+            today={today}
+            onEnterRun={enterRun}
+          />
+        </>
       );
     } else {
       body = (
