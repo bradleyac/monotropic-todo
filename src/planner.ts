@@ -15,7 +15,6 @@ const MODE_LABEL: Record<CognitiveMode, string> = {
 export function planRuns(tasks: Task[]): Run[] {
   const groups = new Map<string, Task[]>();
   for (const t of tasks) {
-    if (t.done) continue;
     const key = `${t.affinity.mode}::${t.affinity.context}`;
     const bucket = groups.get(key) ?? [];
     bucket.push(t);
@@ -24,14 +23,18 @@ export function planRuns(tasks: Task[]): Run[] {
 
   const runs: Run[] = [];
   for (const [key, bucket] of groups) {
-    bucket.sort((a, b) => ENERGY_RANK[b.affinity.energy] - ENERGY_RANK[a.affinity.energy]);
+    bucket.sort((a, b) => {
+      if (a.done !== b.done) return a.done ? 1 : -1;
+      return ENERGY_RANK[b.affinity.energy] - ENERGY_RANK[a.affinity.energy];
+    });
     const shape = dominantShape(bucket);
+    const remaining = bucket.filter((t) => !t.done);
     runs.push({
       id: `run:${key}`,
       label: runLabel(shape),
       shape,
       taskIds: bucket.map((t) => t.id),
-      estMinutes: bucket.reduce((s, t) => s + t.estMinutes, 0),
+      estMinutes: remaining.reduce((s, t) => s + t.estMinutes, 0),
     });
   }
 

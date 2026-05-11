@@ -26,9 +26,30 @@ export function App() {
   const runs = useMemo(() => planRuns(tasks), [tasks]);
 
   function toggle(taskId: string) {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)),
-    );
+    setTasks((prev) => {
+      const next = prev.map((t) =>
+        t.id === taskId ? { ...t, done: !t.done } : t,
+      );
+      if (screen.kind === "focus") {
+        const run = runs.find((r) => r.id === screen.runId);
+        if (run && run.taskIds.includes(taskId)) {
+          const wasAllDone = run.taskIds.every(
+            (id) => prev.find((t) => t.id === id)?.done,
+          );
+          const isAllDone = run.taskIds.every(
+            (id) => next.find((t) => t.id === id)?.done,
+          );
+          if (isAllDone && !wasAllDone) {
+            const runId = run.id;
+            setTimeout(
+              () => setScreen({ kind: "transition", fromRunId: runId }),
+              700,
+            );
+          }
+        }
+      }
+      return next;
+    });
   }
 
   function capture(text: string) {
@@ -39,12 +60,8 @@ export function App() {
     setScreen({ kind: "focus", runId });
   }
 
-  function exitRun(fromRunId: string) {
-    const run = runs.find((r) => r.id === fromRunId);
-    const allDone =
-      run && run.taskIds.every((id) => tasksById[id]?.done);
-    if (allDone) setScreen({ kind: "transition", fromRunId });
-    else setScreen({ kind: "overview" });
+  function exitRun() {
+    setScreen({ kind: "overview" });
   }
 
   function nextRunAfter(fromRunId: string | null) {
@@ -77,7 +94,7 @@ export function App() {
           run={run}
           tasks={tasksById}
           onToggle={toggle}
-          onExit={() => exitRun(run.id)}
+          onExit={exitRun}
         />
       );
     }

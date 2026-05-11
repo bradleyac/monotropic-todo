@@ -13,30 +13,48 @@ export function RunsOverview({ runs, tasks, onEnterRun }: Props) {
       <header className="overview-header">
         <h1>today</h1>
         <p className="muted">
-          {runs.length} runs · about {fmt(total)}
+          {runs.length} runs · about {fmt(total)} left
         </p>
       </header>
       <ul className="run-list">
-        {runs.map((run) => (
-          <li key={run.id}>
-            <button className="run-card" onClick={() => onEnterRun(run.id)}>
-              <div className="run-card-label">{run.label}</div>
-              <div className="run-card-meta">
-                {run.taskIds.length} tasks · {fmt(run.estMinutes)} ·{" "}
-                <span className="chip">{run.shape.energy} energy</span>{" "}
-                <span className="chip">{run.shape.social}</span>
-              </div>
-              <ul className="run-card-tasks">
-                {run.taskIds.slice(0, 3).map((id) => (
-                  <li key={id}>{tasks[id].title}</li>
-                ))}
-                {run.taskIds.length > 3 && (
-                  <li className="muted">+ {run.taskIds.length - 3} more</li>
-                )}
-              </ul>
-            </button>
-          </li>
-        ))}
+        {runs.map((run) => {
+          const remaining = run.taskIds.filter((id) => !tasks[id].done);
+          const isDone = remaining.length === 0;
+          const preview = (remaining.length ? remaining : run.taskIds).slice(0, 3);
+          return (
+            <li key={run.id}>
+              <button
+                className={isDone ? "run-card run-card-done" : "run-card"}
+                onClick={() => onEnterRun(run.id)}
+              >
+                <div className="run-card-label">
+                  {run.label}
+                  {isDone && <span className="run-card-check"> ✓</span>}
+                </div>
+                <div className="run-card-meta">
+                  {isDone
+                    ? `${run.taskIds.length} done`
+                    : `${remaining.length} of ${run.taskIds.length} · ${fmt(run.estMinutes)}`}{" "}
+                  · <span className="chip">{run.shape.energy} energy</span>{" "}
+                  <span className="chip">{run.shape.social}</span>
+                </div>
+                <ul className="run-card-tasks">
+                  {preview.map((id) => (
+                    <li
+                      key={id}
+                      className={tasks[id].done ? "muted strike" : undefined}
+                    >
+                      {tasks[id].title}
+                    </li>
+                  ))}
+                  {run.taskIds.length > 3 && (
+                    <li className="muted">+ {run.taskIds.length - 3} more</li>
+                  )}
+                </ul>
+              </button>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
