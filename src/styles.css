@@ -1,0 +1,277 @@
+:root {
+  --bg: #0b0d10;
+  --surface: #14181d;
+  --surface-2: #1c2127;
+  --text: #e8ecef;
+  --muted: #8a929a;
+  --accent: #c8b48a;
+  --line: #232830;
+  --radius: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
+    system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: max(env(safe-area-inset-top), 20px) 18px
+    max(env(safe-area-inset-bottom), 20px);
+}
+
+.main {
+  flex: 1;
+  padding-bottom: 96px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.overview-header {
+  margin: 8px 0 22px;
+}
+
+.run-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.run-card {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.run-card:hover {
+  background: var(--surface-2);
+  border-color: #2c333c;
+}
+
+.run-card-label {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.run-card-meta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.chip {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.run-card-tasks {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  display: grid;
+  gap: 4px;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.focus-header {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 22px;
+}
+
+.link {
+  background: none;
+  border: none;
+  color: var(--muted);
+  padding: 0;
+  cursor: pointer;
+  font-size: 13px;
+  width: max-content;
+}
+
+.link:hover {
+  color: var(--text);
+}
+
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.task {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+
+.task label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.task input[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid var(--line);
+  background: transparent;
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+}
+
+.task input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.task input[type="checkbox"]:checked::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid var(--bg);
+  border-bottom: 2px solid var(--bg);
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.task-title {
+  flex: 1;
+}
+
+.task-est {
+  font-size: 12px;
+}
+
+.task.done .task-title {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--muted);
+}
+
+.transition {
+  margin-top: 12vh;
+  text-align: center;
+  display: grid;
+  gap: 10px;
+}
+
+.transition h1 {
+  font-size: 32px;
+}
+
+.transition .shift {
+  color: var(--muted);
+  font-size: 16px;
+  margin: 4px 0 14px;
+}
+
+.transition-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:hover {
+  filter: brightness(1.05);
+}
+
+.capture {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 14px max(env(safe-area-inset-bottom), 14px);
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+}
+
+.capture-input {
+  width: 100%;
+  max-width: 532px;
+  margin: 0 auto;
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 12px 18px;
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+
+.capture-input:focus {
+  border-color: var(--accent);
+}
