@@ -1,4 +1,5 @@
 import type { Run, Task } from "../types";
+import { useFlipContainer } from "../useFlip";
 
 type Props = {
   runs: Run[];
@@ -17,50 +18,57 @@ export function RunsOverview({ runs, tasks, onEnterRun }: Props) {
         </p>
       </header>
       <ul className="run-list">
-        {runs.map((run) => {
-          const remaining = run.taskIds.filter((id) => !tasks[id].done);
-          const isDone = remaining.length === 0;
-          const preview = run.taskIds.slice(0, 3);
-          const hidden = run.taskIds.length - preview.length;
-          const countLabel = isDone
-            ? `${run.taskIds.length} done`
-            : remaining.length === run.taskIds.length
-              ? `${run.taskIds.length} ${run.taskIds.length === 1 ? "task" : "tasks"}`
-              : `${remaining.length} of ${run.taskIds.length}`;
-          return (
-            <li key={run.id}>
-              <button
-                className={isDone ? "run-card run-card-done" : "run-card"}
-                onClick={() => onEnterRun(run.id)}
-              >
-                <div className="run-card-label">
-                  {run.label}
-                  {isDone && <span className="run-card-check"> ✓</span>}
-                </div>
-                <div className="run-card-meta">
-                  {isDone ? countLabel : `${countLabel} · ${fmt(run.estMinutes)}`}{" "}
-                  · <span className="chip">{run.shape.energy} energy</span>{" "}
-                  <span className="chip">{run.shape.social}</span>
-                </div>
-                <ul className="run-card-tasks">
-                  {preview.map((id) => (
-                    <li
-                      key={id}
-                      className={tasks[id].done ? "muted strike" : undefined}
-                    >
-                      {tasks[id].title}
-                    </li>
-                  ))}
-                  {hidden > 0 && (
-                    <li className="muted">+ {hidden} more</li>
-                  )}
-                </ul>
-              </button>
-            </li>
-          );
-        })}
+        {runs.map((run) => (
+          <li key={run.id}>
+            <RunCard run={run} tasks={tasks} onEnter={onEnterRun} />
+          </li>
+        ))}
       </ul>
     </section>
+  );
+}
+
+type CardProps = {
+  run: Run;
+  tasks: Record<string, Task>;
+  onEnter: (runId: string) => void;
+};
+
+function RunCard({ run, tasks, onEnter }: CardProps) {
+  const listRef = useFlipContainer<HTMLUListElement>();
+  const remaining = run.taskIds.filter((id) => !tasks[id].done);
+  const isDone = remaining.length === 0;
+  const countLabel = isDone
+    ? `${run.taskIds.length} done`
+    : remaining.length === run.taskIds.length
+      ? `${run.taskIds.length} ${run.taskIds.length === 1 ? "task" : "tasks"}`
+      : `${remaining.length} of ${run.taskIds.length}`;
+  return (
+    <button
+      className={isDone ? "run-card run-card-done" : "run-card"}
+      onClick={() => onEnter(run.id)}
+    >
+      <div className="run-card-label">
+        {run.label}
+        {isDone && <span className="run-card-check"> ✓</span>}
+      </div>
+      <div className="run-card-meta">
+        {isDone ? countLabel : `${countLabel} · ${fmt(run.estMinutes)}`} ·{" "}
+        <span className="chip">{run.shape.energy} energy</span>{" "}
+        <span className="chip">{run.shape.social}</span>
+      </div>
+      <ul className="run-card-tasks" ref={listRef}>
+        {run.taskIds.map((id) => (
+          <li
+            key={id}
+            data-flip-key={id}
+            className={tasks[id].done ? "muted strike" : undefined}
+          >
+            {tasks[id].title}
+          </li>
+        ))}
+      </ul>
+    </button>
   );
 }
 

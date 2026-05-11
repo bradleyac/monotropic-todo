@@ -1,4 +1,5 @@
 import type { Run, Task } from "../types";
+import { useFlipContainer } from "../useFlip";
 
 type Props = {
   run: Run;
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export function RunFocus({ run, tasks, onToggle, onExit }: Props) {
+  const listRef = useFlipContainer<HTMLUListElement>();
   const items = run.taskIds.map((id) => tasks[id]);
   const remaining = items.filter((t) => !t.done).length;
 
@@ -20,9 +22,13 @@ export function RunFocus({ run, tasks, onToggle, onExit }: Props) {
         <h1>{run.label}</h1>
         <p className="muted">{remaining} left</p>
       </header>
-      <ul className="task-list">
+      <ul className="task-list" ref={listRef}>
         {items.map((t) => (
-          <li key={t.id} className={t.done ? "task done" : "task"}>
+          <li
+            key={t.id}
+            data-flip-key={t.id}
+            className={t.done ? "task done" : "task"}
+          >
             <label>
               <input
                 type="checkbox"
