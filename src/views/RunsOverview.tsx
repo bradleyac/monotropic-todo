@@ -20,7 +20,13 @@ export function RunsOverview({ runs, tasks, onEnterRun }: Props) {
         {runs.map((run) => {
           const remaining = run.taskIds.filter((id) => !tasks[id].done);
           const isDone = remaining.length === 0;
-          const preview = (remaining.length ? remaining : run.taskIds).slice(0, 3);
+          const preview = run.taskIds.slice(0, 3);
+          const hidden = run.taskIds.length - preview.length;
+          const countLabel = isDone
+            ? `${run.taskIds.length} done`
+            : remaining.length === run.taskIds.length
+              ? `${run.taskIds.length} ${run.taskIds.length === 1 ? "task" : "tasks"}`
+              : `${remaining.length} of ${run.taskIds.length}`;
           return (
             <li key={run.id}>
               <button
@@ -32,9 +38,7 @@ export function RunsOverview({ runs, tasks, onEnterRun }: Props) {
                   {isDone && <span className="run-card-check"> ✓</span>}
                 </div>
                 <div className="run-card-meta">
-                  {isDone
-                    ? `${run.taskIds.length} done`
-                    : `${remaining.length} of ${run.taskIds.length} · ${fmt(run.estMinutes)}`}{" "}
+                  {isDone ? countLabel : `${countLabel} · ${fmt(run.estMinutes)}`}{" "}
                   · <span className="chip">{run.shape.energy} energy</span>{" "}
                   <span className="chip">{run.shape.social}</span>
                 </div>
@@ -47,8 +51,8 @@ export function RunsOverview({ runs, tasks, onEnterRun }: Props) {
                       {tasks[id].title}
                     </li>
                   ))}
-                  {run.taskIds.length > 3 && (
-                    <li className="muted">+ {run.taskIds.length - 3} more</li>
+                  {hidden > 0 && (
+                    <li className="muted">+ {hidden} more</li>
                   )}
                 </ul>
               </button>
