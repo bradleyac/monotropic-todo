@@ -107,6 +107,7 @@ export function App() {
       <Transition
         from={from}
         to={to}
+        tasks={tasksById}
         onBegin={() => to && setScreen({ kind: "focus", runId: to.id })}
         onBackToOverview={() => setScreen({ kind: "overview" })}
       />
