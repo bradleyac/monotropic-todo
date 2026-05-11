@@ -1,5 +1,15 @@
 import type { DayOfWeek } from "./types";
 
+export const DAY_NAMES: Record<DayOfWeek, string> = {
+  0: "Sun",
+  1: "Mon",
+  2: "Tue",
+  3: "Wed",
+  4: "Thu",
+  5: "Fri",
+  6: "Sat",
+};
+
 export function toISODate(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -34,4 +44,12 @@ export function startOfWeek(d: Date): Date {
 
 export function todayISO(): string {
   return toISODate(new Date());
+}
+
+export function formatAt(iso: string): string {
+  const time = iso.slice(11, 16);
+  const [hh, mm] = time.split(":").map(Number);
+  const period = hh >= 12 ? "pm" : "am";
+  const h12 = hh % 12 || 12;
+  return mm ? `${h12}:${String(mm).padStart(2, "0")}${period}` : `${h12}${period}`;
 }

@@ -1,7 +1,6 @@
 import type { Run, Task } from "../types";
 import { useFlipContainer } from "../useFlip";
-import { DAY_NAMES } from "../themes";
-import { dayOfWeek, parseISODate } from "../dateUtils";
+import { DAY_NAMES, dayOfWeek, formatAt, parseISODate } from "../dateUtils";
 
 type Props = {
   runs: Run[];
@@ -9,6 +8,7 @@ type Props = {
   selectedDate: string;
   today: string;
   onEnterRun: (runId: string) => void;
+  onReplan: () => void;
 };
 
 export function RunsOverview({
@@ -17,6 +17,7 @@ export function RunsOverview({
   selectedDate,
   today,
   onEnterRun,
+  onReplan,
 }: Props) {
   const total = runs.reduce((s, r) => s + r.estMinutes, 0);
   const heading =
@@ -27,7 +28,12 @@ export function RunsOverview({
   return (
     <section className="overview">
       <header className="overview-header">
-        <h1>{heading}</h1>
+        <div className="overview-title-row">
+          <h1>{heading}</h1>
+          <button className="link replan" onClick={onReplan} title="re-plan week">
+            ↻ re-plan
+          </button>
+        </div>
         {runs.length > 0 ? (
           <p className="muted">
             {runs.length} {runs.length === 1 ? "run" : "runs"} · about{" "}
@@ -86,15 +92,19 @@ function RunCard({ run, tasks, onEnter }: CardProps) {
         <span className="chip">{run.shape.social}</span>
       </div>
       <ul className="run-card-tasks" ref={listRef}>
-        {run.taskIds.map((id) => (
-          <li
-            key={id}
-            data-flip-key={id}
-            className={tasks[id].done ? "muted strike" : undefined}
-          >
-            {tasks[id].title}
-          </li>
-        ))}
+        {run.taskIds.map((id) => {
+          const t = tasks[id];
+          return (
+            <li
+              key={id}
+              data-flip-key={id}
+              className={t.done ? "muted strike" : undefined}
+            >
+              {t.at && <span className="at-time">{formatAt(t.at)}</span>}
+              {t.title}
+            </li>
+          );
+        })}
       </ul>
     </button>
   );

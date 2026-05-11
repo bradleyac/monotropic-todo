@@ -3,7 +3,7 @@ import type { Task } from "./types";
 import { seedTasks } from "./mockData";
 import { planRuns } from "./planner";
 import { mockParse } from "./parser";
-import { DEFAULT_THEMES } from "./themes";
+import { planSchedule } from "./scheduler";
 import { todayISO } from "./dateUtils";
 import { RunsOverview } from "./views/RunsOverview";
 import { RunFocus } from "./views/RunFocus";
@@ -17,9 +17,11 @@ type Screen =
   | { kind: "transition"; fromRunId: string | null };
 
 export function App() {
-  const [tasks, setTasks] = useState<Task[]>(seedTasks);
-  const [screen, setScreen] = useState<Screen>({ kind: "overview" });
   const today = useMemo(() => todayISO(), []);
+  const [tasks, setTasks] = useState<Task[]>(() =>
+    planSchedule(seedTasks, today),
+  );
+  const [screen, setScreen] = useState<Screen>({ kind: "overview" });
   const [selectedDate, setSelectedDate] = useState<string>(today);
 
   const tasksById = useMemo(() => {
@@ -61,7 +63,11 @@ export function App() {
   }
 
   function capture(text: string) {
-    setTasks((prev) => [...prev, mockParse(text, DEFAULT_THEMES)]);
+    setTasks((prev) => [...prev, mockParse(text, prev, today)]);
+  }
+
+  function replan() {
+    setTasks((prev) => planSchedule(prev, today));
   }
 
   function selectDate(date: string) {
@@ -97,7 +103,6 @@ export function App() {
         <DayStrip
           selected={selectedDate}
           today={today}
-          themes={DEFAULT_THEMES}
           tasks={tasks}
           onSelect={selectDate}
         />
@@ -107,6 +112,7 @@ export function App() {
           selectedDate={selectedDate}
           today={today}
           onEnterRun={enterRun}
+          onReplan={replan}
         />
       </>
     );
@@ -118,7 +124,6 @@ export function App() {
           <DayStrip
             selected={selectedDate}
             today={today}
-            themes={DEFAULT_THEMES}
             tasks={tasks}
             onSelect={selectDate}
           />
@@ -128,6 +133,7 @@ export function App() {
             selectedDate={selectedDate}
             today={today}
             onEnterRun={enterRun}
+            onReplan={replan}
           />
         </>
       );

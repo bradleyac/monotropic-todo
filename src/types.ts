@@ -17,6 +17,11 @@ export type Task = {
   affinity: Affinity;
   done: boolean;
   scheduledFor: string; // ISO date, e.g. "2026-05-11"
+  // Hard timing.
+  at?: string;     // ISO datetime — appointment; locks the day and time
+  dueBy?: string;  // ISO date — must be scheduled on or before this date
+  // User override — keep this placement when the scheduler re-runs.
+  pinned?: boolean;
   notes?: string;
 };
 

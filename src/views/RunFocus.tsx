@@ -1,5 +1,6 @@
 import type { Run, Task } from "../types";
 import { useFlipContainer } from "../useFlip";
+import { formatAt } from "../dateUtils";
 
 type Props = {
   run: Run;
@@ -35,7 +36,10 @@ export function RunFocus({ run, tasks, onToggle, onExit }: Props) {
                 checked={t.done}
                 onChange={() => onToggle(t.id)}
               />
-              <span className="task-title">{t.title}</span>
+              <span className="task-title">
+                {t.at && <span className="at-time">{formatAt(t.at)}</span>}
+                {t.title}
+              </span>
               <span className="task-est muted">{t.estMinutes}m</span>
             </label>
           </li>

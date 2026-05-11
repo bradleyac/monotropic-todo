@@ -1,6 +1,6 @@
-import type { Task, WeekThemes } from "../types";
-import { DAY_NAMES, themeLabel } from "../themes";
+import type { CognitiveMode, Task } from "../types";
 import {
+  DAY_NAMES,
   addDays,
   dayOfWeek,
   parseISODate,
@@ -11,12 +11,11 @@ import {
 type Props = {
   selected: string;
   today: string;
-  themes: WeekThemes;
   tasks: Task[];
   onSelect: (date: string) => void;
 };
 
-export function DayStrip({ selected, today, themes, tasks, onSelect }: Props) {
+export function DayStrip({ selected, today, tasks, onSelect }: Props) {
   const weekStart = startOfWeek(parseISODate(today));
   const days = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(weekStart, i);
@@ -24,13 +23,19 @@ export function DayStrip({ selected, today, themes, tasks, onSelect }: Props) {
     const dow = dayOfWeek(date);
     const dayTasks = tasks.filter((t) => t.scheduledFor === iso);
     const remaining = dayTasks.filter((t) => !t.done).length;
+    const modes = new Set<CognitiveMode>();
+    let hasAnchor = false;
+    for (const t of dayTasks) {
+      modes.add(t.affinity.mode);
+      if (t.at) hasAnchor = true;
+    }
     return {
       iso,
-      dow,
       label: DAY_NAMES[dow],
       dateNum: date.getDate(),
-      modes: themes[dow],
+      shape: [...modes].slice(0, 2).join(", "),
       remaining,
+      hasAnchor,
       isToday: iso === today,
       isPast: iso < today,
       isSelected: iso === selected,
@@ -54,8 +59,11 @@ export function DayStrip({ selected, today, themes, tasks, onSelect }: Props) {
           aria-current={d.isSelected ? "date" : undefined}
         >
           <span className="day-cell-dow">{d.label}</span>
-          <span className="day-cell-num">{d.dateNum}</span>
-          <span className="day-cell-theme">{themeLabel(d.modes)}</span>
+          <span className="day-cell-num">
+            {d.hasAnchor && <span className="day-cell-anchor-dot" aria-hidden />}
+            {d.dateNum}
+          </span>
+          <span className="day-cell-theme">{d.shape || " "}</span>
           {d.remaining > 0 && (
             <span className="day-cell-badge">{d.remaining}</span>
           )}
