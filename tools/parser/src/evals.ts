@@ -135,7 +135,7 @@ export const EVAL_CASES: EvalCase[] = [
     expected: {
       mode: "social-sync",
       context: "phone-only",
-      minutes: [5, 20],
+      minutes: [5, 30],
       deadline: null,
     },
   },

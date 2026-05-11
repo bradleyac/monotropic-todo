@@ -29,7 +29,7 @@ export type RawParsedTask = {
   deadlineTime: string | null;
   cognitiveMode: CognitiveMode;
   context: Context;
-  estimatedMinutes: number;
+  estimatedMinutes: number | null;
 };
 
 export type ParsedTask = {
@@ -37,5 +37,5 @@ export type ParsedTask = {
   deadline: string | null;
   cognitiveMode: CognitiveMode;
   context: Context;
-  estimatedMinutes: number;
+  estimatedMinutes: number | null;
 };

@@ -68,7 +68,9 @@ Return a JSON object with these fields:
 
   Choose context by where the body has to be. A dentist appointment is "social-sync" (you're interacting with the hygienist) AND "out-and-about" (you have to drive there). An email is "social-async" AND "at-desk". A call to reschedule something is "social-sync" AND "phone-only".
 
-- estimatedMinutes (number): realistic focused-work estimate. Typical ranges: a quick email 5-15, a short errand 30-60, a 1:1 meeting 30, deep design work 60-180.
+- estimatedMinutes (number | null): realistic focused-work estimate. Typical ranges: a quick email 5-15, a short errand 30-60, a 1:1 meeting 30, deep design work 60-180.
+
+  Important: If you don't have enough information to provide a ballpark estimate, return null. Never return 0.
 
 Output ONLY the JSON object. No markdown, no prose.`;
 }
