@@ -22,12 +22,13 @@ type Output =
 export function SingleShot({ today, model }: Props) {
   const [input, setInput] = useState("");
   const [out, setOut] = useState<Output>({ kind: "idle" });
+  const [useSchema, setUseSchema] = useState(true);
 
   async function onParse() {
     if (!input.trim()) return;
     setOut({ kind: "loading" });
     try {
-      const r = await parseTask(input.trim(), today, model);
+      const r = await parseTask(input.trim(), today, model, useSchema);
       setOut({
         kind: "ok",
         task: r.task,
@@ -55,13 +56,24 @@ export function SingleShot({ today, model }: Props) {
           }}
         />
       </label>
-      <button
-        className="primary"
-        onClick={onParse}
-        disabled={out.kind === "loading" || !input.trim()}
-      >
-        {out.kind === "loading" ? "parsing…" : "parse this task"}
-      </button>
+      <div className="single-shot-controls">
+        <button
+          className="primary"
+          onClick={onParse}
+          disabled={out.kind === "loading" || !input.trim()}
+        >
+          {out.kind === "loading" ? "parsing…" : "parse this task"}
+        </button>
+        <label className="raw-toggle">
+          <input
+            type="checkbox"
+            checked={useSchema}
+            onChange={(e) => setUseSchema(e.target.checked)}
+            disabled={out.kind === "loading"}
+          />
+          <span>constrain with JSON schema</span>
+        </label>
+      </div>
 
       {out.kind === "ok" && (
         <div className="output">

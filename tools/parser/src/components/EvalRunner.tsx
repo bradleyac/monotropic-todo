@@ -35,6 +35,7 @@ export function EvalRunner({ model }: Props) {
   );
   const [running, setRunning] = useState(false);
   const [showRaw, setShowRaw] = useState(false);
+  const [useSchema, setUseSchema] = useState(true);
 
   async function runAll() {
     setRunning(true);
@@ -48,7 +49,7 @@ export function EvalRunner({ model }: Props) {
       const c = EVAL_CASES[i];
       setRows((prev) => updateRow(prev, i, { kind: "running" }));
       try {
-        const r = await parseTask(c.input, EVAL_TODAY, model);
+        const r = await parseTask(c.input, EVAL_TODAY, model, useSchema);
         const checks = check(c, r.task);
         setRows((prev) =>
           updateRow(prev, i, {
@@ -82,6 +83,15 @@ export function EvalRunner({ model }: Props) {
         <button className="primary" onClick={runAll} disabled={running}>
           {running ? "running…" : "run evals"}
         </button>
+        <label className="raw-toggle">
+          <input
+            type="checkbox"
+            checked={useSchema}
+            onChange={(e) => setUseSchema(e.target.checked)}
+            disabled={running}
+          />
+          <span>constrain with JSON schema</span>
+        </label>
         <label className="raw-toggle">
           <input
             type="checkbox"

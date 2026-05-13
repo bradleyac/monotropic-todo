@@ -25,18 +25,19 @@ export async function parseTask(
   input: string,
   today: string,
   model: string = DEFAULT_MODEL,
+  useSchema: boolean = true,
 ): Promise<ParseResult> {
   const start = performance.now();
-  const body = {
+  const body: Record<string, unknown> = {
     model,
     messages: [
       { role: "system", content: systemPrompt(today) },
       { role: "user", content: input },
     ],
-    format: TASK_SCHEMA,
     stream: false,
     options: { temperature: 0 },
   };
+  if (useSchema) body.format = TASK_SCHEMA;
 
   let response: Response;
   try {
