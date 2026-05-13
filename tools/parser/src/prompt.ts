@@ -47,6 +47,11 @@ Return a JSON object with these fields:
 
   Important: do not translate weekdays or month+day into a full date. If the user says "Tuesday", emit "tuesday". If they say "February 3rd", emit "02-03". The application picks the right week/year (always the next occurrence forward) so you don't have to.
 
+  Weekday rule: the words Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday ALWAYS refer to days of the week, even when they appear next to a person's name, role, or other noun. They are never names. Examples:
+    "1:1 with manager Wednesday at 10am" -> deadline "wednesday" (Wednesday is the day, not the manager's name)
+    "Coffee with Alex Friday"             -> deadline "friday"
+    "Email Tom Thursday about the draft"  -> deadline "thursday"
+
 - deadlineTime (string | null): "HH:mm" 24-hour, when a specific time is mentioned. Otherwise null.
     "3pm"     -> "15:00"
     "9:30am"  -> "09:30"
