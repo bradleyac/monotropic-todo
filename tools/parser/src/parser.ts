@@ -1,0 +1,143 @@
+import { resolveDeadline } from "./dates";
+import { TASK_SCHEMA, systemPrompt } from "./prompt";
+import type { ParsedTask, RawParsedTask } from "./types";
+import { COGNITIVE_MODES, CONTEXTS } from "./types";
+
+export const DEFAULT_MODEL = "gemma4:e4b";
+
+export type ParseResult = {
+  task: ParsedTask;
+  rawTask: RawParsedTask;
+  raw: string;
+  latencyMs: number;
+  evalCount: number | null;
+  promptEvalCount: number | null;
+};
+
+export type ParseError = {
+  kind: "network" | "http" | "json" | "shape";
+  message: string;
+  raw?: string;
+};
+
+// Calls the local Ollama instance via the Vite dev-server proxy at /ollama
+// (configured in vite.config.ts). Uses /api/chat with a JSON schema as
+// `format` so generation is constrained to valid task JSON.
+export async function parseTask(
+  input: string,
+  today: string,
+  model: string = DEFAULT_MODEL,
+  useSchema: boolean = true,
+): Promise<ParseResult> {
+  const start = performance.now();
+  const body: Record<string, unknown> = {
+    model,
+    messages: [
+      { role: "system", content: systemPrompt(today) },
+      { role: "user", content: input },
+    ],
+    stream: false,
+    options: { temperature: 0 },
+  };
+  if (useSchema) body.format = TASK_SCHEMA;
+
+  let response: Response;
+  try {
+    response = await fetch("/ollama/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    throw {
+      kind: "network",
+      message: `Could not reach Ollama. Is it running on localhost:11434? (${(e as Error).message})`,
+    } satisfies ParseError;
+  }
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw {
+      kind: "http",
+      message: `Ollama returned ${response.status}: ${text || response.statusText}`,
+    } satisfies ParseError;
+  }
+
+  const payload = (await response.json()) as {
+    message?: { content?: string };
+    eval_count?: number;
+    prompt_eval_count?: number;
+  };
+  const raw = payload.message?.content ?? "";
+  const evalCount = typeof payload.eval_count === "number" ? payload.eval_count : null;
+  const promptEvalCount =
+    typeof payload.prompt_eval_count === "number" ? payload.prompt_eval_count : null;
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(stripCodeFence(raw));
+  } catch (e) {
+    throw {
+      kind: "json",
+      message: `Model output wasn't valid JSON: ${(e as Error).message}`,
+      raw,
+    } satisfies ParseError;
+  }
+
+  const rawTask = validate(parsed);
+  if (!rawTask) {
+    throw {
+      kind: "shape",
+      message: "Model output didn't match the expected shape.",
+      raw,
+    } satisfies ParseError;
+  }
+
+  const task: ParsedTask = {
+    title: rawTask.title,
+    deadline: resolveDeadline(rawTask.deadline, rawTask.deadlineTime, today),
+    cognitiveMode: rawTask.cognitiveMode,
+    context: rawTask.context,
+    estimatedMinutes: rawTask.estimatedMinutes,
+  };
+
+  return {
+    task,
+    rawTask,
+    raw,
+    latencyMs: performance.now() - start,
+    evalCount,
+    promptEvalCount,
+  };
+}
+
+// Without the schema constraint, some models wrap their JSON output in a
+// markdown code fence (```json ... ```). Strip it before parsing; leave the
+// stored `raw` field untouched so the UI still shows what the model actually
+// emitted.
+function stripCodeFence(s: string): string {
+  const trimmed = s.trim();
+  const m = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/);
+  return m ? m[1].trim() : trimmed;
+}
+
+function validate(x: unknown): RawParsedTask | null {
+  if (!x || typeof x !== "object") return null;
+  const o = x as Record<string, unknown>;
+  if (typeof o.title !== "string") return null;
+  if (o.deadline !== null && typeof o.deadline !== "string") return null;
+  if (o.deadlineTime !== null && typeof o.deadlineTime !== "string") return null;
+  if (typeof o.cognitiveMode !== "string") return null;
+  if (!(COGNITIVE_MODES as readonly string[]).includes(o.cognitiveMode)) return null;
+  if (typeof o.context !== "string") return null;
+  if (!(CONTEXTS as readonly string[]).includes(o.context)) return null;
+  if (o.estimatedMinutes !== null && (typeof o.estimatedMinutes !== "number" || !Number.isFinite(o.estimatedMinutes))) return null;
+  return {
+    title: o.title,
+    deadline: o.deadline as string | null,
+    deadlineTime: o.deadlineTime as string | null,
+    cognitiveMode: o.cognitiveMode as RawParsedTask["cognitiveMode"],
+    context: o.context as RawParsedTask["context"],
+    estimatedMinutes: o.estimatedMinutes,
+  };
+}
