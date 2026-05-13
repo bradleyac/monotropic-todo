@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { Task } from "./types";
 import { seedTasks } from "./mockData";
 import { planRuns } from "./planner";
-import { llmParseAndPlace } from "./llmParse";
+import { llmParseDraft, placeDraft } from "./llmParse";
 import { planSchedule } from "./scheduler";
 import { todayISO } from "./dateUtils";
 import { RunsOverview } from "./views/RunsOverview";
@@ -10,11 +10,13 @@ import { RunFocus } from "./views/RunFocus";
 import { Transition } from "./views/Transition";
 import { CaptureBar } from "./views/CaptureBar";
 import { DayStrip } from "./views/DayStrip";
+import { ValidateTask } from "./views/ValidateTask";
 
 type Screen =
   | { kind: "overview" }
   | { kind: "focus"; runId: string }
-  | { kind: "transition"; fromRunId: string | null };
+  | { kind: "transition"; fromRunId: string | null }
+  | { kind: "validate"; draft: Task; originalInput: string };
 
 export function App() {
   const today = useMemo(() => todayISO(), []);
@@ -63,8 +65,17 @@ export function App() {
   }
 
   async function capture(text: string) {
-    const placed = await llmParseAndPlace(text, tasks, today);
-    setTasks((prev) => [...prev, placed]);
+    const draft = await llmParseDraft(text, today);
+    setScreen({ kind: "validate", draft, originalInput: text });
+  }
+
+  function confirmCapture(final: Task) {
+    setTasks((prev) => [...prev, placeDraft(final, prev, today)]);
+    setScreen({ kind: "overview" });
+  }
+
+  function cancelCapture() {
+    setScreen({ kind: "overview" });
   }
 
   function replan() {
@@ -148,7 +159,7 @@ export function App() {
         />
       );
     }
-  } else {
+  } else if (screen.kind === "transition") {
     const from = screen.fromRunId
       ? runs.find((r) => r.id === screen.fromRunId) ?? null
       : null;
@@ -160,6 +171,15 @@ export function App() {
         tasks={tasksById}
         onBegin={() => to && setScreen({ kind: "focus", runId: to.id })}
         onBackToOverview={() => setScreen({ kind: "overview" })}
+      />
+    );
+  } else {
+    body = (
+      <ValidateTask
+        draft={screen.draft}
+        originalInput={screen.originalInput}
+        onConfirm={confirmCapture}
+        onCancel={cancelCapture}
       />
     );
   }

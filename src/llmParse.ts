@@ -47,16 +47,19 @@ function socialDemand(mode: ParserCognitiveMode): SocialDemand {
 
 const DEFAULT_MINUTES = 20;
 
-export async function llmParseAndPlace(
-  input: string,
-  existing: Task[],
-  today: string,
-): Promise<Task> {
+// Parse the user's input into a draft task. scheduledFor is left as today;
+// the caller decides when to run placement (typically after the user has
+// confirmed/edited the draft on the validation screen).
+export async function llmParseDraft(input: string, today: string): Promise<Task> {
   const { task } = await parseTask(input, today);
-  return toTask(task, existing, today);
+  return toDraft(task, today);
 }
 
-function toTask(parsed: ParsedTask, existing: Task[], today: string): Task {
+export function placeDraft(draft: Task, existing: Task[], today: string): Task {
+  return { ...draft, scheduledFor: placeTask(draft, existing, today) };
+}
+
+function toDraft(parsed: ParsedTask, today: string): Task {
   const affinity: Affinity = {
     mode: MODE_MAP[parsed.cognitiveMode],
     context: CONTEXT_MAP[parsed.context],
@@ -84,6 +87,5 @@ function toTask(parsed: ParsedTask, existing: Task[], today: string): Task {
     }
   }
 
-  draft.scheduledFor = placeTask(draft, existing, today);
   return draft;
 }
