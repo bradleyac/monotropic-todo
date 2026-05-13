@@ -75,7 +75,7 @@ export async function parseTask(
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(stripCodeFence(raw));
   } catch (e) {
     throw {
       kind: "json",
@@ -109,6 +109,16 @@ export async function parseTask(
     evalCount,
     promptEvalCount,
   };
+}
+
+// Without the schema constraint, some models wrap their JSON output in a
+// markdown code fence (```json ... ```). Strip it before parsing; leave the
+// stored `raw` field untouched so the UI still shows what the model actually
+// emitted.
+function stripCodeFence(s: string): string {
+  const trimmed = s.trim();
+  const m = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/);
+  return m ? m[1].trim() : trimmed;
 }
 
 function validate(x: unknown): RawParsedTask | null {
