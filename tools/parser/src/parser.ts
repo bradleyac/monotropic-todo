@@ -1,9 +1,9 @@
+import { resolveDeadline } from "./dates";
+import { TASK_SCHEMA, systemPrompt } from "./prompt";
 import type { ParsedTask, RawParsedTask } from "./types";
 import { COGNITIVE_MODES, CONTEXTS } from "./types";
-import { TASK_SCHEMA, systemPrompt } from "./prompt";
-import { resolveDeadline } from "./dates";
 
-export const DEFAULT_MODEL = "gemma4:26b";
+export const DEFAULT_MODEL = "gemma4:e4b";
 
 export type ParseResult = {
   task: ParsedTask;
@@ -104,7 +104,7 @@ function validate(x: unknown): RawParsedTask | null {
   if (!(COGNITIVE_MODES as readonly string[]).includes(o.cognitiveMode)) return null;
   if (typeof o.context !== "string") return null;
   if (!(CONTEXTS as readonly string[]).includes(o.context)) return null;
-  if (typeof o.estimatedMinutes !== "number" || !Number.isFinite(o.estimatedMinutes)) return null;
+  if (o.estimatedMinutes !== null && (typeof o.estimatedMinutes !== "number" || !Number.isFinite(o.estimatedMinutes))) return null;
   return {
     title: o.title,
     deadline: o.deadline as string | null,

@@ -1,6 +1,4 @@
 import { useState } from "react";
-import type { ParsedTask } from "../types";
-import { parseTask, type ParseError } from "../parser";
 import {
   EVAL_CASES,
   EVAL_TODAY,
@@ -9,6 +7,8 @@ import {
   type CheckResults,
   type EvalCase,
 } from "../evals";
+import { parseTask, type ParseError } from "../parser";
+import type { ParsedTask } from "../types";
 
 type Props = {
   model: string;
@@ -17,10 +17,10 @@ type Props = {
 type Row = {
   case: EvalCase;
   state:
-    | { kind: "pending" }
-    | { kind: "running" }
-    | { kind: "ok"; task: ParsedTask; checks: CheckResults; latencyMs: number }
-    | { kind: "err"; message: string };
+  | { kind: "pending" }
+  | { kind: "running" }
+  | { kind: "ok"; task: ParsedTask; checks: CheckResults; latencyMs: number }
+  | { kind: "err"; message: string; raw: string | undefined };
 };
 
 export function EvalRunner({ model }: Props) {
@@ -54,7 +54,7 @@ export function EvalRunner({ model }: Props) {
       } catch (e) {
         const err = e as ParseError;
         setRows((prev) =>
-          updateRow(prev, i, { kind: "err", message: err.message }),
+          updateRow(prev, i, { kind: "err", message: err.message, raw: err.raw }),
         );
       }
     }
@@ -100,11 +100,17 @@ export function EvalRunner({ model }: Props) {
   );
 }
 
+function RenderError({ row }: { row: Row }) {
+  if (row.state.kind !== 'err') return null;
+  return <div><div className="err-message small">{row.state.message}</div><div className="muted small">{row.state.raw}</div></div>
+}
+
+
 function EvalBody({ row }: { row: Row }) {
   const s = row.state;
   if (s.kind === "pending") return <div className="muted small">pending</div>;
   if (s.kind === "running") return <div className="muted small">running…</div>;
-  if (s.kind === "err") return <div className="err-message small">{s.message}</div>;
+  if (s.kind === "err") return RenderError({ row });
 
   const exp = row.case.expected;
   const t = s.task;
