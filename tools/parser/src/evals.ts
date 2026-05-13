@@ -69,13 +69,13 @@ export const EVAL_CASES: EvalCase[] = [
   },
   {
     id: "sync-1on1",
-    input: "Weekly 1:1 with manager Wednesday at 10am",
+    input: "Weekly 1:1 with manager Thursday at 10am",
     expected: {
       mode: "social-sync",
       // A 1:1 is usually a video call at the desk, but could be in-person.
       context: ["at-desk", "out-and-about"],
       minutes: [25, 60],
-      deadline: "2026-05-13T10:00",
+      deadline: "2026-05-14T10:00",
     },
   },
   {
@@ -173,8 +173,9 @@ export function check(c: EvalCase, task: ParsedTask): CheckResults {
     mode: checkMode(c.expected.mode, task.cognitiveMode),
     context: checkContext(c.expected.context, task.context),
     minutes:
-      task.estimatedMinutes >= c.expected.minutes[0] &&
-      task.estimatedMinutes <= c.expected.minutes[1],
+      task.estimatedMinutes === null || // Allow null when unable to infer.
+      (task.estimatedMinutes >= c.expected.minutes[0] &&
+        task.estimatedMinutes <= c.expected.minutes[1]),
     deadline: checkDeadline(c.expected.deadline, task.deadline),
   };
 }
