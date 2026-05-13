@@ -10,6 +10,8 @@ export type ParseResult = {
   rawTask: RawParsedTask;
   raw: string;
   latencyMs: number;
+  evalCount: number | null;
+  promptEvalCount: number | null;
 };
 
 export type ParseError = {
@@ -61,8 +63,15 @@ export async function parseTask(
     } satisfies ParseError;
   }
 
-  const payload = (await response.json()) as { message?: { content?: string } };
+  const payload = (await response.json()) as {
+    message?: { content?: string };
+    eval_count?: number;
+    prompt_eval_count?: number;
+  };
   const raw = payload.message?.content ?? "";
+  const evalCount = typeof payload.eval_count === "number" ? payload.eval_count : null;
+  const promptEvalCount =
+    typeof payload.prompt_eval_count === "number" ? payload.prompt_eval_count : null;
 
   let parsed: unknown;
   try {
@@ -92,7 +101,14 @@ export async function parseTask(
     estimatedMinutes: rawTask.estimatedMinutes,
   };
 
-  return { task, rawTask, raw, latencyMs: performance.now() - start };
+  return {
+    task,
+    rawTask,
+    raw,
+    latencyMs: performance.now() - start,
+    evalCount,
+    promptEvalCount,
+  };
 }
 
 function validate(x: unknown): RawParsedTask | null {

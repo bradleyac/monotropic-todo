@@ -25,6 +25,8 @@ type Row = {
     checks: CheckResults;
     latencyMs: number;
     raw: string;
+    evalCount: number | null;
+    promptEvalCount: number | null;
   }
   | { kind: "err"; message: string; raw: string | undefined };
 };
@@ -58,6 +60,8 @@ export function EvalRunner({ model }: Props) {
             checks,
             latencyMs: r.latencyMs,
             raw: r.raw,
+            evalCount: r.evalCount,
+            promptEvalCount: r.promptEvalCount,
           }),
         );
       } catch (e) {
@@ -170,6 +174,12 @@ function EvalBody({ row, showRaw }: { row: Row; showRaw: boolean }) {
       />
       <div className="eval-meta">
         <span className="chip">{s.latencyMs.toFixed(0)} ms</span>
+        {s.evalCount !== null && (
+          <span className="chip">{s.evalCount} out tok</span>
+        )}
+        {s.promptEvalCount !== null && (
+          <span className="chip">{s.promptEvalCount} in tok</span>
+        )}
         <span className="muted small">
           title: {t.title} · {s.raw.length} chars raw
         </span>
