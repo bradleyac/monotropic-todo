@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { Task } from "./types";
 import { seedTasks } from "./mockData";
 import { planRuns } from "./planner";
-import { mockParse } from "./parser";
+import { llmParseAndPlace } from "./llmParse";
 import { planSchedule } from "./scheduler";
 import { todayISO } from "./dateUtils";
 import { RunsOverview } from "./views/RunsOverview";
@@ -62,8 +62,9 @@ export function App() {
     });
   }
 
-  function capture(text: string) {
-    setTasks((prev) => [...prev, mockParse(text, prev, today)]);
+  async function capture(text: string) {
+    const placed = await llmParseAndPlace(text, tasks, today);
+    setTasks((prev) => [...prev, placed]);
   }
 
   function replan() {
