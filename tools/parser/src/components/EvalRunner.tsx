@@ -19,7 +19,13 @@ type Row = {
   state:
   | { kind: "pending" }
   | { kind: "running" }
-  | { kind: "ok"; task: ParsedTask; checks: CheckResults; latencyMs: number }
+  | {
+    kind: "ok";
+    task: ParsedTask;
+    checks: CheckResults;
+    latencyMs: number;
+    raw: string;
+  }
   | { kind: "err"; message: string; raw: string | undefined };
 };
 
@@ -28,6 +34,7 @@ export function EvalRunner({ model }: Props) {
     EVAL_CASES.map((c) => ({ case: c, state: { kind: "pending" } })),
   );
   const [running, setRunning] = useState(false);
+  const [showRaw, setShowRaw] = useState(false);
 
   async function runAll() {
     setRunning(true);
@@ -49,6 +56,7 @@ export function EvalRunner({ model }: Props) {
             task: r.task,
             checks,
             latencyMs: r.latencyMs,
+            raw: r.raw,
           }),
         );
       } catch (e) {
@@ -74,6 +82,14 @@ export function EvalRunner({ model }: Props) {
         <button className="primary" onClick={runAll} disabled={running}>
           {running ? "running…" : "run evals"}
         </button>
+        <label className="raw-toggle">
+          <input
+            type="checkbox"
+            checked={showRaw}
+            onChange={(e) => setShowRaw(e.target.checked)}
+          />
+          <span>show raw output</span>
+        </label>
         {completed.length > 0 && (
           <div className="evals-summary">
             <span className="chip chip-pass">{passed} pass</span>
@@ -92,7 +108,7 @@ export function EvalRunner({ model }: Props) {
         {rows.map((row) => (
           <li key={row.case.id} className={rowClass(row)}>
             <div className="eval-input">{row.case.input}</div>
-            <EvalBody row={row} />
+            <EvalBody row={row} showRaw={showRaw} />
           </li>
         ))}
       </ul>
@@ -106,7 +122,7 @@ function RenderError({ row }: { row: Row }) {
 }
 
 
-function EvalBody({ row }: { row: Row }) {
+function EvalBody({ row, showRaw }: { row: Row; showRaw: boolean }) {
   const s = row.state;
   if (s.kind === "pending") return <div className="muted small">pending</div>;
   if (s.kind === "running") return <div className="muted small">running…</div>;
@@ -144,8 +160,11 @@ function EvalBody({ row }: { row: Row }) {
       />
       <div className="eval-meta">
         <span className="chip">{s.latencyMs.toFixed(0)} ms</span>
-        <span className="muted small">title: {t.title}</span>
+        <span className="muted small">
+          title: {t.title} · {s.raw.length} chars raw
+        </span>
       </div>
+      {showRaw && <pre className="eval-raw">{s.raw}</pre>}
     </div>
   );
 }
